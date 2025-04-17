@@ -1,0 +1,75 @@
+# Файлы окружения и конфигурации
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Файлы IDE и редакторов
+.idea/
+.vscode/
+*.swp
+*.swo
+__pycache__/
+
+# Файлы Python
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Базы данных и логи
+*.db
+*.sqlite
+*.log
+logs/
+
+# Временные файлы
+*.tmp
+*.bak
+*~
+
+# Файлы зависимостей
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Файлы Jupyter Notebook
+.ipynb_checkpoints
+
+# Файлы PyCharm
+.idea
+
+# Файлы Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# Файлы macOS
+.DS_Store
+
+# Файлы Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini

@@ -1,4 +1,5 @@
 import os
+import sqlite3
 import logging
 import sqlite3
 import requests
@@ -24,58 +25,12 @@ logger = logging.getLogger(__name__)
 bot = Bot(token=os.getenv("BOT_TOKEN"))
 dp = Dispatcher()
 
-OKDESK_API_URL = "https://api.okdesk.ru/v1"
-OKDESK_API_KEY = os.getenv("OKDESK_API_KEY")
-DATABASE_NAME = "bot.db"
 
-
-# Интеграция с Okdesk
-def create_okdesk_ticket(subject: str, description: str, client_id: int, category_code: str) -> dict:
-    headers = {"X-API-KEY": OKDESK_API_KEY}
-    category_id = get_category_id_by_code(category_code)
-
-    if not category_id:
-        return {"error": "Category not found"}
-
-    data = {
-        "subject": subject,
-        "description": description,
-        "client_id": client_id,
-        "category_id": category_id
-    }
-
-    response = requests.post(
-        f"{OKDESK_API_URL}/tickets",
-        headers=headers,
-        json=data
-    )
-
-    if response.status_code != 200:
-        logger.error(f"Ошибка Okdesk: {response.text}")
-        return {"error": "Ошибка сервера"}
-
-    return response.json()
-
-
-def get_category_id_by_code(code: str) -> int:
-    response = requests.get(
-        f"{OKDESK_API_URL}/categories",
-        headers={"X-API-KEY": OKDESK_API_KEY}
-    )
-
-    if response.status_code == 200:
-        for category in response.json().get("data", []):
-            if category.get("code") == code:
-                return category["id"]
-    return None
-
-
-# Инициализация БД
 def init_db():
-    with sqlite3.connect(DATABASE_NAME) as conn:
+    with sqlite3.connect("bot.db") as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id INTEGER PRIMARY KEY,
                 user_id INTEGER UNIQUE,
                 phone TEXT,
                 username TEXT,
@@ -84,39 +39,20 @@ def init_db():
         """)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS faq (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id INTEGER PRIMARY KEY,
                 question TEXT UNIQUE,
                 answer TEXT
             )
         """)
-        logger.info("Таблицы успешно созданы.")
 
 
-def execute_query(query: str, params: tuple = ()):
-    try:
-        with sqlite3.connect(DATABASE_NAME) as conn:
-            cur = conn.cursor()
-            cur.execute(query, params)
-            if query.strip().upper().startswith("SELECT"):
-                return cur.fetchall()
-            else:
-                conn.commit()
-                return cur.rowcount
-    except sqlite3.Error as e:
-        logger.error(f"Ошибка базы данных: {e}")
-        return None
-
-
-# Клавиатуры
 def get_contact_keyboard():
     return ReplyKeyboardMarkup(
         keyboard=[[KeyboardButton(text="📱 Поделиться контактом", request_contact=True)]],
-        resize_keyboard=True,
-        one_time_keyboard=True
+        resize_keyboard=True
     )
 
 
-# Хэндлеры
 @dp.message(Command("start"))
 async def start(message: types.Message):
     try:
@@ -139,16 +75,6 @@ async def start(message: types.Message):
     except Exception as e:
         logger.error(f"Start error: {e}")
         await message.answer("⚠️ Произошла ошибка. Попробуйте позже.")
-
-
-@dp.message(Command("help"))
-async def help_cmd(message: types.Message):
-    await message.answer("Список команд:\n/help - помощь\n/faq - задать вопрос")
-
-
-@dp.message(Command("faq"))
-async def faq_cmd(message: types.Message):
-    await message.answer("Введите ваш вопрос, и я постараюсь найти ответ в базе.")
 
 
 @dp.message(F.content == "contact")
@@ -174,8 +100,6 @@ async def handle_contact(message: types.Message):
     except Exception as e:
         logger.error(f"Registration error: {e}")
         await message.answer("❌ Ошибка регистрации")
-
-
 
 
 @dp.message()
